@@ -11,7 +11,7 @@ def test_root():
     assert response.json() == {
         "message": "FastAPI CI/CD Practice",
         "status": "success",
-        "version": "1.0.0"
+        "version": "1.1.0"
     }
 
 
