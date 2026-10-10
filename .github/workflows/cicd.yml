@@ -44,3 +44,37 @@ jobs:
         with:
           name: fastapi-app
           path: fastapi-app.tar.gz
+
+
+  cd:
+    name: Deploy to EC2
+    needs: ci
+    runs-on: [self-hosted, Linux, X64, fastapi-cd]
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fastapi-app
+          path: artifact
+
+      - name: Deploy FastAPI Application
+        run: |
+          set -euo pipefail
+
+          DEPLOY_DIR=/home/ec2-user/fastapi-app
+
+          mkdir -p "$DEPLOY_DIR"
+
+          tar -xzf artifact/fastapi-app.tar.gz -C "$DEPLOY_DIR"
+
+          "$DEPLOY_DIR/venv/bin/python" -m pip install -r "$DEPLOY_DIR/requirements.txt"
+
+          sudo -n /usr/bin/systemctl restart fastapi.service
+
+      - name: Verify Deployment
+        run: |
+          curl --retry 10 \
+            --retry-delay 2 \
+            --retry-connrefused \
+            -fsS http://127.0.0.1:8000/health
